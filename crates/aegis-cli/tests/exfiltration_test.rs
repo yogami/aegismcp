@@ -1,3 +1,5 @@
+#![cfg(target_os = "macos")]
+
 use assert_cmd::Command;
 use serde_json::json;
 use std::io::Write;
