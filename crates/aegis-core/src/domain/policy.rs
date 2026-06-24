@@ -82,11 +82,11 @@ impl Policy {
         let mut allowed = false;
         for cap in &tool_policy.capabilities {
             match cap {
-                Capability::FileRead(pattern) | Capability::FileWrite(pattern) => {
-                    if glob_match::glob_match(pattern, path) {
-                        allowed = true;
-                        break;
-                    }
+                Capability::FileRead(pattern) | Capability::FileWrite(pattern)
+                    if glob_match::glob_match(pattern, path) =>
+                {
+                    allowed = true;
+                    break;
                 }
                 _ => {}
             }

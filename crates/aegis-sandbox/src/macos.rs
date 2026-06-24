@@ -6,6 +6,12 @@ pub struct MacOsSandbox {
     profile_dir: std::path::PathBuf,
 }
 
+impl Default for MacOsSandbox {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MacOsSandbox {
     pub fn new() -> Self {
         Self {
@@ -27,13 +33,10 @@ impl MacOsSandbox {
 
         for tool_policy in policy.tool_policies().values() {
             for cap in &tool_policy.capabilities {
-                match cap {
-                    Capability::NetworkConnect(hosts) => {
-                        for host in hosts {
-                            profile.push_str(&format!("(allow network-outbound (remote ip \"*:{}\"))\n", host));
-                        }
+                if let Capability::NetworkConnect(hosts) = cap {
+                    for host in hosts {
+                        profile.push_str(&format!("(allow network-outbound (remote ip \"*:{}\"))\n", host));
                     }
-                    _ => {}
                 }
             }
         }

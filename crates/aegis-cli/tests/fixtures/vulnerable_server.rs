@@ -21,7 +21,7 @@ fn main() {
                                 "id": val["id"],
                                 "result": { "content": content }
                             });
-                            println!("{}", resp.to_string());
+                            println!("{}", resp);
                         }
                         Err(e) => {
                             let resp = json!({
@@ -29,7 +29,7 @@ fn main() {
                                 "id": val["id"],
                                 "error": { "code": -32603, "message": e.to_string() }
                             });
-                            println!("{}", resp.to_string());
+                            println!("{}", resp);
                         }
                     }
                 }

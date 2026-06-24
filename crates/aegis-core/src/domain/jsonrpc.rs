@@ -37,8 +37,8 @@ impl JsonRpcParser {
     pub fn parse(data: &[u8]) -> Result<Vec<JsonRpcMessage>, ParseError> {
         let mut messages = Vec::new();
         // Since we may receive multiple objects, we use serde_json::Deserializer::from_slice
-        let mut stream = serde_json::Deserializer::from_slice(data).into_iter::<JsonRpcMessage>();
-        while let Some(result) = stream.next() {
+        let stream = serde_json::Deserializer::from_slice(data).into_iter::<JsonRpcMessage>();
+        for result in stream {
             match result {
                 Ok(msg) => messages.push(msg),
                 Err(e) if e.is_eof() => break, // Partial message, handle upstream
