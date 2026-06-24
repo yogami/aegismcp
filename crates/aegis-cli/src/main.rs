@@ -65,8 +65,6 @@ async fn main() -> anyhow::Result<()> {
     use aegis_core::domain::policy::Policy;
     use aegis_sandbox::macos::MacOsSandbox;
     use aegis_proxy::stdio_proxy::{ProxyConfig, StdioProxy};
-    use aegis_core::domain::jsonrpc::JsonRpcParser;
-    use aegis_core::domain::audit::{AuditEvent, AuditAction, AuditResult};
     use std::fs;
 
     // Load policy

@@ -40,6 +40,7 @@ impl MacOsSandbox {
         profile
     }
 
+    #[allow(dead_code)]
     fn glob_to_sb_regex(glob: &str) -> String {
         glob.replace('.', "\\.").replace('*', ".*").replace('?', ".")
     }
