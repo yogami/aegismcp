@@ -80,6 +80,7 @@ async fn main() -> anyhow::Result<()> {
         default_deny: cli.deny_net_all,
         tool_policies: std::collections::HashMap::new(),
     });
+    let _ = &policy;
 
     #[cfg(target_os = "macos")]
     let (command, args) = {
