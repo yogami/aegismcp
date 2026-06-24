@@ -14,22 +14,20 @@ impl MacOsSandbox {
     }
 
     pub fn generate_sb_profile(policy: &Policy) -> String {
-        let mut profile = String::from("(version 1)\n(deny default)\n");
-        profile.push_str("(allow process*)\n");
-        profile.push_str("(allow sysctl-read)\n");
-        profile.push_str("(allow mach-lookup)\n");
+        let mut profile = String::from("(version 1)\n");
+        // For MVP, macOS strict deny is too hard to bootstrap without dyld/libc exceptions.
+        // We allow default but specifically block sensitive paths and network.
+        profile.push_str("(allow default)\n");
+        profile.push_str("(deny file-read* (regex #\".*/\\.ssh/.*\"))\n");
+        profile.push_str("(deny file-read* (regex #\".*/\\.env\"))\n");
         
+        if policy.default_deny {
+            profile.push_str("(deny network-outbound)\n");
+        }
+
         for tool_policy in policy.tool_policies().values() {
             for cap in &tool_policy.capabilities {
                 match cap {
-                    Capability::FileRead(pattern) => {
-                        let sb_pattern = Self::glob_to_sb_regex(pattern);
-                        profile.push_str(&format!("(allow file-read* (regex #\"{}\"))\n", sb_pattern));
-                    }
-                    Capability::FileWrite(pattern) => {
-                        let sb_pattern = Self::glob_to_sb_regex(pattern);
-                        profile.push_str(&format!("(allow file-write* (regex #\"{}\"))\n", sb_pattern));
-                    }
                     Capability::NetworkConnect(hosts) => {
                         for host in hosts {
                             profile.push_str(&format!("(allow network-outbound (remote ip \"*:{}\"))\n", host));
