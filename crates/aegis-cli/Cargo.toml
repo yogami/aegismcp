@@ -1,0 +1,21 @@
+[package]
+name = "aegis-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "CLI entrypoint for AegisMCP security daemon"
+
+[[bin]]
+name = "aegismcp"
+path = "src/main.rs"
+
+[dependencies]
+aegis-core = { path = "../aegis-core" }
+aegis-proxy = { path = "../aegis-proxy" }
+aegis-sandbox = { path = "../aegis-sandbox" }
+clap = { workspace = true }
+tokio = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = "1"

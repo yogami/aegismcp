@@ -1,0 +1,76 @@
+use aegis_core::domain::policy::{Capability, Policy};
+use aegis_core::ports::sandbox::{SandboxEnforcer, SandboxError};
+
+/// macOS sandbox enforcer using Apple's sandbox-exec (Seatbelt) profiles.
+pub struct MacOsSandbox {
+    profile_dir: std::path::PathBuf,
+}
+
+impl MacOsSandbox {
+    pub fn new() -> Self {
+        Self {
+            profile_dir: std::env::temp_dir().join("aegismcp-profiles"),
+        }
+    }
+
+    pub fn generate_sb_profile(policy: &Policy) -> String {
+        let mut profile = String::from("(version 1)\n(deny default)\n");
+        profile.push_str("(allow process*)\n");
+        profile.push_str("(allow sysctl-read)\n");
+        profile.push_str("(allow mach-lookup)\n");
+        
+        for tool_policy in policy.tool_policies().values() {
+            for cap in &tool_policy.capabilities {
+                match cap {
+                    Capability::FileRead(pattern) => {
+                        let sb_pattern = Self::glob_to_sb_regex(pattern);
+                        profile.push_str(&format!("(allow file-read* (regex #\"{}\"))\n", sb_pattern));
+                    }
+                    Capability::FileWrite(pattern) => {
+                        let sb_pattern = Self::glob_to_sb_regex(pattern);
+                        profile.push_str(&format!("(allow file-write* (regex #\"{}\"))\n", sb_pattern));
+                    }
+                    Capability::NetworkConnect(hosts) => {
+                        for host in hosts {
+                            profile.push_str(&format!("(allow network-outbound (remote ip \"*:{}\"))\n", host));
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        profile
+    }
+
+    fn glob_to_sb_regex(glob: &str) -> String {
+        glob.replace('.', "\\.").replace('*', ".*").replace('?', ".")
+    }
+}
+
+impl SandboxEnforcer for MacOsSandbox {
+    fn apply_policy(&self, pid: u32, policy: &Policy) -> Result<(), SandboxError> {
+        let profile = Self::generate_sb_profile(policy);
+        std::fs::create_dir_all(&self.profile_dir)
+            .map_err(|e| SandboxError::ApplyFailed(format!("Cannot create profile dir: {}", e)))?;
+        
+        let profile_path = self.profile_dir.join(format!("aegis-{}.sb", pid));
+        std::fs::write(&profile_path, &profile)
+            .map_err(|e| SandboxError::ApplyFailed(format!("Cannot write profile: {}", e)))?;
+            
+        tracing::info!(pid = pid, profile = %profile_path.display(), "Applied macOS sandbox profile");
+        Ok(())
+    }
+
+    fn revoke(&self, pid: u32) -> Result<(), SandboxError> {
+        let profile_path = self.profile_dir.join(format!("aegis-{}.sb", pid));
+        if profile_path.exists() {
+            std::fs::remove_file(&profile_path)
+                .map_err(|e| SandboxError::RevokeFailed(format!("Cannot remove profile: {}", e)))?;
+        }
+        Ok(())
+    }
+
+    fn backend_name(&self) -> &str {
+        "sandbox-exec"
+    }
+}

@@ -1,0 +1,16 @@
+[package]
+name = "aegis-proxy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Stdio proxy for AegisMCP - spawns and wraps MCP server processes"
+
+[dependencies]
+aegis-core = { path = "../aegis-core" }
+tokio = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros"] }

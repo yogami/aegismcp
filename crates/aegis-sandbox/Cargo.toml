@@ -1,0 +1,17 @@
+[package]
+name = "aegis-sandbox"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "OS-level sandboxing adapters for AegisMCP"
+
+[dependencies]
+aegis-core = { path = "../aegis-core" }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+landlock = "0.4"
+
+[dev-dependencies]
+tempfile = "3"
