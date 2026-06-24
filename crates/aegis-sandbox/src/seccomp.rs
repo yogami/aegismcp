@@ -4,6 +4,12 @@ use aegis_core::ports::sandbox::{SandboxEnforcer, SandboxError};
 /// Linux seccomp-BPF sandbox enforcer.
 pub struct SeccompSandbox {}
 
+impl Default for SeccompSandbox {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SeccompSandbox {
     pub fn new() -> Self {
         Self {}

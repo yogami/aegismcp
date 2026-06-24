@@ -4,6 +4,12 @@ use aegis_core::ports::sandbox::{SandboxEnforcer, SandboxError};
 /// Linux Landlock LSM sandbox enforcer.
 pub struct LandlockSandbox {}
 
+impl Default for LandlockSandbox {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LandlockSandbox {
     pub fn new() -> Self {
         Self {}
