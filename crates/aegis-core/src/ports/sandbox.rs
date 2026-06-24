@@ -16,10 +16,10 @@ pub enum SandboxError {
 pub trait SandboxEnforcer: Send + Sync {
     /// Apply the given policy to the process with the specified PID.
     fn apply_policy(&self, pid: u32, policy: &Policy) -> Result<(), SandboxError>;
-    
+
     /// Revoke all sandbox restrictions for the given PID.
     fn revoke(&self, pid: u32) -> Result<(), SandboxError>;
-    
+
     /// Returns the name of this sandbox backend.
     fn backend_name(&self) -> &str;
 }

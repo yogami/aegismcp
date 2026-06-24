@@ -63,7 +63,7 @@ fn test_block_exfiltration() {
     // 4. Assert safe file was read
     println!("STDOUT: {}", stdout);
     assert!(stdout.contains("safe content"));
-    
+
     // 5. Assert secret file read was blocked (Operation not permitted)
     assert!(stdout.contains("Operation not permitted"));
 }

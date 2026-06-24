@@ -103,7 +103,12 @@ impl Policy {
         }
     }
 
-    pub fn check_network_access(&self, tool_name: &str, host: &str, _port: u16) -> Result<(), PolicyViolation> {
+    pub fn check_network_access(
+        &self,
+        tool_name: &str,
+        host: &str,
+        _port: u16,
+    ) -> Result<(), PolicyViolation> {
         let tool_policy = match self.tool_policies.get(tool_name) {
             Some(p) => p,
             None => {
@@ -167,8 +172,12 @@ mod tests {
             tool_policies: HashMap::new(),
         };
 
-        assert!(policy.check_file_access("unknown_tool", "/tmp/foo").is_err());
-        assert!(policy.check_network_access("unknown_tool", "example.com", 80).is_err());
+        assert!(policy
+            .check_file_access("unknown_tool", "/tmp/foo")
+            .is_err());
+        assert!(policy
+            .check_network_access("unknown_tool", "example.com", 80)
+            .is_err());
     }
 
     #[test]
@@ -189,8 +198,12 @@ mod tests {
             tool_policies,
         };
 
-        assert!(policy.check_file_access("read_tool", "/workspace/test.txt").is_ok());
-        assert!(policy.check_file_access("read_tool", "/etc/passwd").is_err());
+        assert!(policy
+            .check_file_access("read_tool", "/workspace/test.txt")
+            .is_ok());
+        assert!(policy
+            .check_file_access("read_tool", "/etc/passwd")
+            .is_err());
     }
 
     #[test]
@@ -214,7 +227,11 @@ mod tests {
             tool_policies,
         };
 
-        assert!(policy.check_file_access("read_tool", "/workspace/test.txt").is_ok());
-        assert!(policy.check_file_access("read_tool", "/home/user/.ssh/id_rsa").is_err());
+        assert!(policy
+            .check_file_access("read_tool", "/workspace/test.txt")
+            .is_ok());
+        assert!(policy
+            .check_file_access("read_tool", "/home/user/.ssh/id_rsa")
+            .is_err());
     }
 }

@@ -52,7 +52,10 @@ impl JsonRpcParser {
         if msg.method == "tools/call" {
             if let Some(params) = &msg.params {
                 if let Some(name) = params.get("name").and_then(|v| v.as_str()) {
-                    let arguments = params.get("arguments").cloned().unwrap_or(serde_json::Value::Null);
+                    let arguments = params
+                        .get("arguments")
+                        .cloned()
+                        .unwrap_or(serde_json::Value::Null);
                     return Some(ToolCallRequest {
                         tool_name: name.to_string(),
                         arguments,
@@ -88,7 +91,8 @@ mod tests {
 
     #[test]
     fn test_parse_multiple() {
-        let json_str = r#"{"jsonrpc": "2.0", "method": "test"} {"jsonrpc": "2.0", "method": "test2"}"#;
+        let json_str =
+            r#"{"jsonrpc": "2.0", "method": "test"} {"jsonrpc": "2.0", "method": "test2"}"#;
         let msgs = JsonRpcParser::parse(json_str.as_bytes()).unwrap();
         assert_eq!(msgs.len(), 2);
     }

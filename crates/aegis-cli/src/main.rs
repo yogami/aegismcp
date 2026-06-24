@@ -63,17 +63,17 @@ async fn main() -> anyhow::Result<()> {
     );
 
     use aegis_core::domain::policy::Policy;
-    use aegis_sandbox::macos::MacOsSandbox;
     use aegis_proxy::stdio_proxy::{ProxyConfig, StdioProxy};
     use std::fs;
 
     // Load policy
     let policy_json = if let Some(path) = &cli.policy {
-        fs::read_to_string(path).unwrap_or_else(|_| "{\"name\": \"default\", \"tool_policies\": {}}".into())
+        fs::read_to_string(path)
+            .unwrap_or_else(|_| "{\"name\": \"default\", \"tool_policies\": {}}".into())
     } else {
         "{\"name\": \"default\", \"tool_policies\": {}}".into()
     };
-    
+
     let policy = Policy::from_json(&policy_json).unwrap_or_else(|_| Policy {
         name: "fallback".into(),
         description: None,
@@ -81,38 +81,58 @@ async fn main() -> anyhow::Result<()> {
         tool_policies: std::collections::HashMap::new(),
     });
 
-    let profile_content = MacOsSandbox::generate_sb_profile(&policy);
-    let profile_path = std::env::temp_dir().join("aegismcp-runtime.sb");
-    fs::write(&profile_path, &profile_content)?;
+    #[cfg(target_os = "macos")]
+    let (command, args) = {
+        use aegis_sandbox::macos::MacOsSandbox;
+        let profile_content = MacOsSandbox::generate_sb_profile(&policy);
+        let profile_path = std::env::temp_dir().join("aegismcp-runtime.sb");
+        fs::write(&profile_path, profile_content)?;
 
-    eprintln!("[AegisMCP] 🛡️  Daemon initialized. Kernel sandbox active.");
-    
-    let mut config = ProxyConfig {
-        command: "sandbox-exec".into(),
-        args: vec!["-f".into(), profile_path.to_string_lossy().into_owned()],
+        eprintln!("[AegisMCP] 🛡️  Daemon initialized. Kernel sandbox active.");
+
+        let mut final_args = vec![
+            "-f".into(),
+            profile_path.to_string_lossy().into_owned(),
+            "--".into(),
+        ];
+        final_args.extend(cli.command);
+        ("sandbox-exec".to_string(), final_args)
+    };
+
+    #[cfg(not(target_os = "macos"))]
+    let (command, args) = {
+        eprintln!("[AegisMCP] 🛡️  Daemon initialized. Target platform execution active.");
+        let mut cmd_iter = cli.command.iter();
+        let cmd = cmd_iter.next().cloned().unwrap_or_default();
+        let final_args = cmd_iter.cloned().collect::<Vec<String>>();
+        (cmd, final_args)
+    };
+
+    let config = ProxyConfig {
+        command,
+        args,
         env: std::collections::HashMap::new(),
     };
-    
-    config.args.push("--".into());
-    config.args.extend(cli.command);
 
     let mut proxy = StdioProxy::new(config);
     proxy.spawn()?;
 
-    proxy.relay_with_intercept(|msg| {
-        if let Some(req) = msg.as_object() {
-            if req.get("method").and_then(|m| m.as_str()) == Some("tools/call") {
-                if let Some(params) = req.get("params") {
-                    if let Some(name) = params.get("name").and_then(|n| n.as_str()) {
-                        eprintln!("[AegisMCP] 🔍 Tool call intercepted: {}", name);
-                        if let Some(args) = params.get("arguments") {
-                            eprintln!("[AegisMCP] 📦 Arguments: {}", args);
+    proxy
+        .relay_with_intercept(|msg| {
+            if let Some(req) = msg.as_object() {
+                if req.get("method").and_then(|m| m.as_str()) == Some("tools/call") {
+                    if let Some(params) = req.get("params") {
+                        if let Some(name) = params.get("name").and_then(|n| n.as_str()) {
+                            eprintln!("[AegisMCP] 🔍 Tool call intercepted: {}", name);
+                            if let Some(args) = params.get("arguments") {
+                                eprintln!("[AegisMCP] 📦 Arguments: {}", args);
+                            }
                         }
                     }
                 }
             }
-        }
-    }).await?;
+        })
+        .await?;
 
     Ok(())
 }

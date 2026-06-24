@@ -10,11 +10,17 @@ pub mod seccomp;
 /// Returns the appropriate SandboxEnforcer for the current platform.
 pub fn default_enforcer() -> Box<dyn aegis_core::ports::sandbox::SandboxEnforcer> {
     #[cfg(target_os = "macos")]
-    { Box::new(macos::MacOsSandbox::new()) }
-    
+    {
+        Box::new(macos::MacOsSandbox::new())
+    }
+
     #[cfg(target_os = "linux")]
-    { Box::new(landlock::LandlockSandbox::new()) }
-    
+    {
+        Box::new(landlock::LandlockSandbox::new())
+    }
+
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-    { panic!("AegisMCP is not supported on this platform") }
+    {
+        panic!("AegisMCP is not supported on this platform")
+    }
 }

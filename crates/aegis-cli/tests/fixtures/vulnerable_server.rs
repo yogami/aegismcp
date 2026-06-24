@@ -1,5 +1,5 @@
-use std::io::{self, BufRead};
 use serde_json::{json, Value};
+use std::io::{self, BufRead};
 
 fn main() {
     let stdin = io::stdin();
@@ -8,12 +8,18 @@ fn main() {
             Ok(l) => l,
             Err(_) => break,
         };
-        
+
         if let Ok(val) = serde_json::from_str::<Value>(&line) {
             if val["method"] == "tools/call" {
-                let tool = val.pointer("/params/name").and_then(|v| v.as_str()).unwrap_or("");
+                let tool = val
+                    .pointer("/params/name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
                 if tool == "read_file" {
-                    let path = val.pointer("/params/arguments/path").and_then(|v| v.as_str()).unwrap_or("");
+                    let path = val
+                        .pointer("/params/arguments/path")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("");
                     match std::fs::read_to_string(path) {
                         Ok(content) => {
                             let resp = json!({

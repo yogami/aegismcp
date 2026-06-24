@@ -35,10 +35,10 @@ impl<'a> ProxySession<'a> {
         let action = AuditAction::ProcessSpawn(format!("tool_call: {}", tool_call.tool_name));
         let event = AuditEvent::new_allowed(pid, tool_call.tool_name.clone(), action, None);
         self.audit_sink.emit(&event)?;
-        
+
         // Apply policy to sandbox
         self.sandbox.apply_policy(pid, self.policy)?;
-        
+
         Ok(())
     }
 }
